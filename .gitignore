@@ -68,6 +68,8 @@ scripts/run.bat
 scripts/**/*.js
 scripts/**/*.js.map
 coverage/
+js/README.md
+js/LICENSE
 internal/
 **/.DS_Store
 .settings
