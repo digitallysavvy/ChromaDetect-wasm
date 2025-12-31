@@ -96,7 +96,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## Development
 
-This project is a hybrid Rust + TypeScript workspace.
+This project is a hybrid Rust + TypeScript workspace. For AI agents and automated tools, use [AGENTS.md](AGENTS.md) for project-specific instructions and patterns.
 
 ### Prerequisites
 
