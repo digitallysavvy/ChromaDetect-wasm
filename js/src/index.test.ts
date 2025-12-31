@@ -5,14 +5,18 @@ import { ChromaDetect } from './index';
 vi.mock('./image-processor', () => {
   const MockImageProcessor = vi.fn();
   MockImageProcessor.prototype.init = vi.fn().mockResolvedValue(undefined);
-  MockImageProcessor.prototype.detectFromImage = vi.fn().mockResolvedValue({ hue: 120 });
+  MockImageProcessor.prototype.detectFromImage = vi
+    .fn()
+    .mockResolvedValue({ hue: 120 });
   return { ImageProcessor: MockImageProcessor };
 });
 
 vi.mock('./video-processor', () => {
   const MockVideoProcessor = vi.fn();
   MockVideoProcessor.prototype.init = vi.fn().mockResolvedValue(undefined);
-  MockVideoProcessor.prototype.detectFromVideo = vi.fn().mockResolvedValue({ hue: 240 });
+  MockVideoProcessor.prototype.detectFromVideo = vi
+    .fn()
+    .mockResolvedValue({ hue: 240 });
   return { VideoProcessor: MockVideoProcessor };
 });
 
@@ -25,16 +29,20 @@ describe('ChromaDetect Main', () => {
 
   it('should initialize both processors', async () => {
     await detector.init();
-    // Verification is implicit as mocks are called. 
+    // Verification is implicit as mocks are called.
   });
 
   it('should delegate image detection', async () => {
-    const result = await detector.detectFromImage(document.createElement('img'));
+    const result = await detector.detectFromImage(
+      document.createElement('img')
+    );
     expect(result).toEqual({ hue: 120 });
   });
 
   it('should delegate video detection', async () => {
-    const result = await detector.detectFromVideo(document.createElement('video'));
+    const result = await detector.detectFromVideo(
+      document.createElement('video')
+    );
     expect(result).toEqual({ hue: 240 });
   });
 
@@ -50,8 +58,8 @@ describe('ChromaDetect Main', () => {
       onload: (() => void) | null = null;
       onerror: ((e: any) => void) | null = null;
       _src = '';
-      set src(val: string) {
-        this._src = val;
+      set src(_val: string) {
+        this._src = _val;
         // Simulate async load
         setTimeout(() => {
           if (this.onload) this.onload();
@@ -78,7 +86,7 @@ describe('ChromaDetect Main', () => {
     global.Image = class {
       onload: (() => void) | null = null;
       onerror: ((e: any) => void) | null = null;
-      set src(val: string) {
+      set src(_val: string) {
         setTimeout(() => {
           if (this.onerror) this.onerror(new Error('Load failed'));
         }, 0);
@@ -86,7 +94,9 @@ describe('ChromaDetect Main', () => {
     } as any;
 
     const file = new File([''], 'test.png');
-    await expect(detector.detectFromImage(file)).rejects.toThrow('Failed to load image');
+    await expect(detector.detectFromImage(file)).rejects.toThrow(
+      'Failed to load image'
+    );
 
     global.Image = originalImage;
   });

@@ -5,7 +5,7 @@ import { ImageProcessor } from './image-processor';
 vi.mock('../wasm/chroma_detect', () => {
   const ChromaDetectMock = vi.fn();
   ChromaDetectMock.prototype.detect_from_image = vi.fn();
-  
+
   return {
     default: vi.fn().mockResolvedValue(undefined), // init function
     ChromaDetect: ChromaDetectMock,
@@ -19,7 +19,7 @@ describe('ImageProcessor', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Polyfill ImageData if missing (JSDOM issue)
     if (typeof ImageData === 'undefined') {
       global.ImageData = class {
@@ -27,13 +27,13 @@ describe('ImageProcessor', () => {
         width: number;
         height: number;
         constructor(sw: number, sh: number) {
-            this.width = sw;
-            this.height = sh;
-            this.data = new Uint8ClampedArray(sw * sh * 4);
+          this.width = sw;
+          this.height = sh;
+          this.data = new Uint8ClampedArray(sw * sh * 4);
         }
       } as any;
     }
-    
+
     processor = new ImageProcessor();
   });
 
@@ -45,18 +45,20 @@ describe('ImageProcessor', () => {
 
   it('should throw if not initialized', async () => {
     const img = document.createElement('img');
-    await expect(processor.detectFromImage(img)).rejects.toThrow('Not initialized');
+    await expect(processor.detectFromImage(img)).rejects.toThrow(
+      'Not initialized'
+    );
   });
 
   it('should process HTMLImageElement', async () => {
     await processor.init();
-    
+
     // Mock ChromaDetect instance method
     const mockDetect = vi.fn().mockReturnValue({
       color: { r: 0, g: 255, b: 0 },
       confidence: 0.9,
       coverage: 0.5,
-      hue: 120
+      hue: 120,
     });
     // @ts-ignore - Accessing mock instance
     (ChromaDetect as any).mock.instances[0].detect_from_image = mockDetect;
@@ -69,11 +71,11 @@ describe('ImageProcessor', () => {
     // Mock Canvas context
     const mockContext = {
       drawImage: vi.fn(),
-      getImageData: vi.fn().mockImplementation((x, y, w, h) => {
+      getImageData: vi.fn().mockImplementation((_x, _y, w, h) => {
         return new ImageData(w, h);
       }),
     };
-    
+
     // Mock canvas creation
     const mockCanvas = document.createElement('canvas');
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
@@ -94,13 +96,13 @@ describe('ImageProcessor', () => {
       color: { r: 0, g: 255, b: 0 },
       confidence: 0.9,
       coverage: 0.5,
-      hue: 120
+      hue: 120,
     });
   });
 
   it('should process HTMLCanvasElement', async () => {
     await processor.init();
-    
+
     // Mock ChromaDetect instance method
     const mockDetect = vi.fn().mockReturnValue({ hue: 240 });
     // @ts-ignore
@@ -109,7 +111,7 @@ describe('ImageProcessor', () => {
     const inputCanvas = document.createElement('canvas');
     inputCanvas.width = 50;
     inputCanvas.height = 50;
-    
+
     // Internal canvas created by toImageData
     const internalContext = {
       drawImage: vi.fn(),
@@ -119,10 +121,12 @@ describe('ImageProcessor', () => {
     internalCanvas.getContext = vi.fn().mockReturnValue(internalContext);
 
     // Spy on createElement to return our internal mock canvas
-    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
-       if (tagName === 'canvas') return internalCanvas;
-       return document.createElement(tagName);
-    });
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockImplementation((tagName) => {
+        if (tagName === 'canvas') return internalCanvas;
+        return document.createElement(tagName);
+      });
 
     const result = await processor.detectFromImage(inputCanvas);
 
@@ -130,13 +134,13 @@ describe('ImageProcessor', () => {
     expect(internalContext.getImageData).toHaveBeenCalledWith(0, 0, 50, 50);
     expect(mockDetect).toHaveBeenCalled();
     expect(result).toEqual({ hue: 240 });
-    
+
     createElementSpy.mockRestore();
   });
 
   it('should process ImageData directly', async () => {
     await processor.init();
-    
+
     const mockDetect = vi.fn().mockReturnValue({ hue: 60 });
     // @ts-ignore
     (ChromaDetect as any).mock.instances[0].detect_from_image = mockDetect;
@@ -147,7 +151,7 @@ describe('ImageProcessor', () => {
     // Should NOT create a canvas or call drawImage
     const createElementSpy = vi.spyOn(document, 'createElement');
     expect(createElementSpy).not.toHaveBeenCalledWith('canvas');
-    
+
     expect(mockDetect).toHaveBeenCalled();
     expect(result).toEqual({ hue: 60 });
   });
