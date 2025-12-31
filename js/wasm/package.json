@@ -1,0 +1,15 @@
+{
+  "name": "chroma-detect",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "chroma_detect_bg.wasm",
+    "chroma_detect.js",
+    "chroma_detect.d.ts"
+  ],
+  "main": "chroma_detect.js",
+  "types": "chroma_detect.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

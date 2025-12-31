@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # --- Rust Setup & Tests ---
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Run Rust Tests
+        working-directory: ./rust
+        run: cargo test --verbose
+
+      # --- Build Step (Sanity Check) ---
+      # Ensures that the project actually builds before running JS tests
+      - name: Build Project
+        run: ./scripts/build.sh
+
+      # --- JavaScript Setup & Tests ---
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install JS Dependencies
+        working-directory: ./js
+        run: npm ci
+
+      - name: Run JS Tests
+        working-directory: ./js
+        run: npm test -- --run
