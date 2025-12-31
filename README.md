@@ -1,7 +1,7 @@
 # Chroma Detect
 
-[![CI](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/ci.yml/badge.svg)](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/ci.yml)
-[![Tests](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/test.yml/badge.svg)](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/test.yml)
+[![Rust CI](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/rust-ci.yml)
+[![JS CI](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/js-ci.yml/badge.svg)](https://github.com/digitallysavvy/ChromaDetect-wasm/actions/workflows/js-ci.yml)
 [![npm version](https://img.shields.io/npm/v/chroma-detect.svg)](https://www.npmjs.com/package/chroma-detect)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
