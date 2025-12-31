@@ -5,13 +5,14 @@ on:
     branches: ['main']
   pull_request:
     branches: ['main']
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  rust-checks:
-    name: Rust Check & Test
+  rust-tests:
+    name: 🦀 Rust Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,28 +22,26 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
-      - name: Cache Cargo registry
+      - name: Cache Cargo
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
 
-      - name: Check
-        run: cd rust && cargo check
+      - name: Run Rust Tests
+        working-directory: ./rust
+        run: cargo test --verbose
 
-      - name: Test
-        run: cd rust && cargo test
-
-  js-checks:
-    name: JS Build & Test
+  js-tests:
+    name: 📦 JS Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust
+      - name: Install Rust (for Build)
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -50,7 +49,7 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
@@ -58,10 +57,12 @@ jobs:
           cache-dependency-path: js/package-lock.json
 
       - name: Install Dependencies
-        run: cd js && npm ci
+        working-directory: ./js
+        run: npm ci
 
-      - name: Build Project
+      - name: Build WASM & JS
         run: ./scripts/build.sh
 
-      - name: Run Tests
-        run: cd js && npm test -- --run
+      - name: Run JS Tests
+        working-directory: ./js
+        run: npm test -- --run
