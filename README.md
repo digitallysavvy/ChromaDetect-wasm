@@ -102,7 +102,7 @@ This project is a hybrid Rust + TypeScript workspace.
 
 - Rust (stable)
 - `wasm-pack`: `curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`
-- Node.js v18+
+- Node.js 20+
 
 ### Building Locally
 
