@@ -13,6 +13,9 @@ wasm-pack build \
 cd ..
 
 echo "📦 Building JavaScript package..."
+# Copy LICENSE and use npm-specific README for the package
+cp LICENSE js/
+cp js/README.npm.md js/README.md
 cd js
 npm run build
 
