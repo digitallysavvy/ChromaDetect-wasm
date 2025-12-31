@@ -21,3 +21,6 @@ lto = true          # Enable link-time optimization
 codegen-units = 1   # Better optimization, slower compile
 panic = "abort"     # Don't include unwinding code
 strip = true        # Strip symbols
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

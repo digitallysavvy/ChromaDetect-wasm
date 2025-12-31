@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
 
 jobs:
   test:
@@ -28,12 +28,7 @@ jobs:
         working-directory: ./rust
         run: cargo test --verbose
 
-      # --- Build Step (Sanity Check) ---
-      # Ensures that the project actually builds before running JS tests
-      - name: Build Project
-        run: ./scripts/build.sh
-
-      # --- JavaScript Setup & Tests ---
+      # --- JavaScript Setup ---
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
@@ -45,6 +40,12 @@ jobs:
         working-directory: ./js
         run: npm ci
 
+      # --- Build Step (Sanity Check) ---
+      # Ensures that the project actually builds before running JS tests
+      - name: Build Project
+        run: ./scripts/build.sh
+
+      # --- JS Tests ---
       - name: Run JS Tests
         working-directory: ./js
         run: npm test -- --run
