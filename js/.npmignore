@@ -3,3 +3,11 @@ tsconfig.json
 vite.config.ts
 node_modules
 .DS_Store
+coverage
+
+# Force include wasm files (override wasm/.gitignore)
+!wasm/**
+!wasm/*.wasm
+!wasm/*.js
+!wasm/*.d.ts
+!wasm/package.json

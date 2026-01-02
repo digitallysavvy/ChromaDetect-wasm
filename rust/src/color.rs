@@ -80,8 +80,9 @@ impl HSV {
     }
 
     pub fn is_chromakey_candidate(&self) -> bool {
-        // High saturation (> 0.6) + reasonable brightness
-        self.s > 0.6 && self.v > 0.3
+        // Much more lenient: Accept any pixel with some color (not pure gray)
+        // This allows darker/less saturated chromakeys and lighting variations
+        self.s > 0.3 && self.v > 0.1
     }
 }
 

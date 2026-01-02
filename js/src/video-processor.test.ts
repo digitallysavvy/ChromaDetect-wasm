@@ -148,29 +148,42 @@ describe('VideoProcessor', () => {
     global.URL.createObjectURL = vi.fn().mockReturnValue('blob:video');
     global.URL.revokeObjectURL = vi.fn();
 
+    let canPlayThroughHandler: EventListener | null = null;
+    let seekedHandler: EventListener | null = null;
+    let srcValue = '';
+
     const videoMock = {
       preload: '',
       muted: false,
-      src: '',
+      get src() { return srcValue; },
+      set src(val: string) {
+        srcValue = val;
+        // Simulate canplaythrough event when src is set
+        setTimeout(() => {
+          if (canPlayThroughHandler) canPlayThroughHandler(new Event('canplaythrough'));
+        }, 50);
+      },
       duration: 5,
       videoWidth: 100,
       videoHeight: 100,
-      onloadedmetadata: null as any,
-      onerror: null as any,
-      currentTime: 0,
-      readyState: 0,
-      addEventListener: vi.fn(),
+      get currentTime() { return 0; },
+      set currentTime(_val: number) {
+        setTimeout(() => {
+          if (seekedHandler) seekedHandler(new Event('seeked'));
+        }, 10);
+      },
+      readyState: 4, // HAVE_ENOUGH_DATA
+      addEventListener: vi.fn().mockImplementation((event, handler) => {
+        if (event === 'canplaythrough') canPlayThroughHandler = handler as EventListener;
+        if (event === 'seeked') seekedHandler = handler as EventListener;
+      }),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
+      load: vi.fn(),
     };
 
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
       if (tagName === 'video') {
-        setTimeout(() => {
-          if (videoMock.onloadedmetadata) {
-            (videoMock.onloadedmetadata as any)();
-          }
-        }, 50);
         return videoMock as any;
       }
       if (tagName === 'canvas') {
@@ -187,29 +200,11 @@ describe('VideoProcessor', () => {
       return {} as any;
     });
 
-    Object.defineProperty(videoMock, 'currentTime', {
-      get: () => 0,
-      set: () => {
-        setTimeout(() => {
-          const call = (videoMock.addEventListener as any).mock.calls.find(
-            (c: any) => c[0] === 'seeked'
-          );
-          if (call) call[1]();
-        }, 10);
-      },
-    });
-
     const file = new File([''], 'test.mp4', { type: 'video/mp4' });
     const promise = processor.detectFromVideo(file, { frameSampleCount: 1 });
 
-    const advance = async (ms: number) => {
-      vi.advanceTimersByTime(ms);
-      await Promise.resolve();
-      await Promise.resolve();
-    };
-
-    await advance(100);
-    await advance(100);
+    // Run all timers to completion
+    await vi.runAllTimersAsync();
 
     await promise;
 
@@ -222,14 +217,20 @@ describe('VideoProcessor', () => {
     global.URL.createObjectURL = vi.fn().mockReturnValue('blob:bad');
     global.URL.revokeObjectURL = vi.fn();
 
+    let errorHandler: EventListener | null = null;
+
     vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
       if (tagName === 'video') {
         const v = {
-          onloadedmetadata: null,
-          onerror: null,
+          preload: '',
+          muted: false,
+          addEventListener: vi.fn().mockImplementation((event, handler) => {
+            if (event === 'error') errorHandler = handler as EventListener;
+          }),
+          removeEventListener: vi.fn(),
           set src(_val: string) {
             setTimeout(() => {
-              if (this.onerror) (this.onerror as any)(new Error('Load failed'));
+              if (errorHandler) errorHandler(new ErrorEvent('error', { message: 'Load failed' }));
             }, 10);
           },
         } as any;

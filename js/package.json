@@ -1,6 +1,30 @@
 {
   "name": "chroma-detect",
   "version": "0.1.0",
+  "description": "High-performance chromakey detection for the web, powered by Rust and WebAssembly",
+  "keywords": [
+    "chromakey",
+    "greenscreen",
+    "bluescreen",
+    "webassembly",
+    "wasm",
+    "rust",
+    "video",
+    "image-processing"
+  ],
+  "author": "digitallysavvy",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digitallysavvy/ChromaDetect-wasm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/digitallysavvy/ChromaDetect-wasm/issues"
+  },
+  "homepage": "https://github.com/digitallysavvy/ChromaDetect-wasm#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "module",
   "main": "./dist/chroma-detect.umd.cjs",
   "module": "./dist/chroma-detect.js",
