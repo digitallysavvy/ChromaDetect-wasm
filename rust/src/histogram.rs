@@ -114,11 +114,59 @@ impl ColorHistogram {
             }
 
             if is_peak {
+                // Sum up all pixels in the peak region (not just the single bin)
+                // This gives us the true coverage of this color
+                let mut region_count: u32 = count;
+                let mut region_r_sum: u64 = self.rgb_accumulators[i].r_sum;
+                let mut region_g_sum: u64 = self.rgb_accumulators[i].g_sum;
+                let mut region_b_sum: u64 = self.rgb_accumulators[i].b_sum;
+                let mut region_pixel_count: u32 = self.rgb_accumulators[i].count;
+
+                // Expand outward from peak until we hit a valley (< 20% of peak height)
+                let valley_threshold = count / 5;
+
+                // Check left side
+                for j in 1..=30 {
+                    let idx = (i + 360 - j) % 360;
+                    if self.hue_bins[idx] < valley_threshold {
+                        break;
+                    }
+                    region_count += self.hue_bins[idx];
+                    region_r_sum += self.rgb_accumulators[idx].r_sum;
+                    region_g_sum += self.rgb_accumulators[idx].g_sum;
+                    region_b_sum += self.rgb_accumulators[idx].b_sum;
+                    region_pixel_count += self.rgb_accumulators[idx].count;
+                }
+
+                // Check right side
+                for j in 1..=30 {
+                    let idx = (i + j) % 360;
+                    if self.hue_bins[idx] < valley_threshold {
+                        break;
+                    }
+                    region_count += self.hue_bins[idx];
+                    region_r_sum += self.rgb_accumulators[idx].r_sum;
+                    region_g_sum += self.rgb_accumulators[idx].g_sum;
+                    region_b_sum += self.rgb_accumulators[idx].b_sum;
+                    region_pixel_count += self.rgb_accumulators[idx].count;
+                }
+
+                // Calculate average color from the entire region
+                let avg_color = if region_pixel_count > 0 {
+                    RGB {
+                        r: (region_r_sum / region_pixel_count as u64) as u8,
+                        g: (region_g_sum / region_pixel_count as u64) as u8,
+                        b: (region_b_sum / region_pixel_count as u64) as u8,
+                    }
+                } else {
+                    self.rgb_accumulators[i].average()
+                };
+
                 peaks.push(Peak {
                     hue: i as f32,
-                    count,
-                    percentage: count as f32 / self.total_pixels as f32,
-                    average_color: self.rgb_accumulators[i].average(),  // Return actual average color
+                    count: region_count,
+                    percentage: region_count as f32 / self.total_pixels as f32,
+                    average_color: avg_color,
                 });
             }
         }
@@ -138,8 +186,18 @@ impl ColorHistogram {
             });
         }
 
-        // Sort by count descending
-        peaks.sort_by(|a, b| b.count.cmp(&a.count));
+        // Sort: colored peaks (by count desc), then grayscale peaks (by count desc)
+        // This ensures we prefer chromakey colors over grayscale backgrounds
+        peaks.sort_by(|a, b| {
+            let a_is_grayscale = a.average_color.to_hsv().s < 0.15;
+            let b_is_grayscale = b.average_color.to_hsv().s < 0.15;
+
+            match (a_is_grayscale, b_is_grayscale) {
+                (false, true) => std::cmp::Ordering::Less,    // a (colored) before b (grayscale)
+                (true, false) => std::cmp::Ordering::Greater, // b (colored) before a (grayscale)
+                _ => b.count.cmp(&a.count),                   // same type: sort by count
+            }
+        });
         peaks
     }
 }
@@ -165,14 +223,18 @@ mod tests {
     #[test]
     fn test_histogram_filtering() {
         let mut hist = ColorHistogram::new();
-        
-        // Add 10 gray pixels (low saturation) - should be ignored
+
+        // Add 10 gray pixels (low saturation) - counted but stored as grayscale
         let gray = RGB { r: 100, g: 100, b: 100 };
         for _ in 0..10 {
             hist.add_pixel(gray);
         }
 
-        assert_eq!(hist.total_pixels, 0);
+        // Gray pixels are counted in total but not in hue bins
+        assert_eq!(hist.total_pixels, 10);
+        assert_eq!(hist.grayscale_count, 10);
+        // Hue bins should be empty since gray has no hue
+        assert_eq!(hist.hue_bins.iter().sum::<u32>(), 0);
     }
 
     #[test]
