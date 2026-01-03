@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::color::{RGB, HSV};
+use crate::color::RGB;
 use crate::histogram::ColorHistogram;
 use crate::clustering::{KMeans, Cluster};
 
@@ -46,25 +46,98 @@ pub fn detect_chromakey(
     height: u32,
     config: &DetectionConfig,
 ) -> Option<ChromakeyResult> {
-    // Strategy:
-    // 1. Edge-based analysis (fast, catches most cases)
-    // 2. If inconclusive, fall back to clustering
-    
-    // Step 1: Analyze edge pixels
-    if let Some(edge_result) = analyze_edges(pixels, width, height, config) {
-        if edge_result.confidence > config.confidence_threshold {
-            return Some(edge_result);
+    // New strategy for robust detection:
+    // 1. Full-frame histogram analysis (samples entire image)
+    // 2. If inconclusive, try edge-based analysis
+    // 3. If still inconclusive, fall back to clustering
+
+    // Step 1: Analyze full frame (most robust)
+    if let Some(full_result) = analyze_full_frame(pixels, width, height, config) {
+        if full_result.confidence > config.confidence_threshold {
+            return Some(full_result);
         }
-        
-        // Step 2: Fall back to full-image clustering
+
+        // Step 2: Try edge-based analysis
+        let edge_result = analyze_edges(pixels, width, height, config);
+
+        // Step 3: Try clustering if needed
         let cluster_result = analyze_clusters(pixels, width, height, config);
-        
-        // Step 3: Return best result
-        return choose_best_result(Some(edge_result), cluster_result);
+
+        // Return best result from all methods
+        return choose_best_result(
+            Some(full_result),
+            choose_best_result(edge_result, cluster_result)
+        );
     }
 
-    // If edges yielded nothing valid, try clusters
-    analyze_clusters(pixels, width, height, config)
+    // Fallback: Try edges and clusters
+    let edge_result = analyze_edges(pixels, width, height, config);
+    let cluster_result = analyze_clusters(pixels, width, height, config);
+    choose_best_result(edge_result, cluster_result)
+}
+
+fn analyze_full_frame(
+    pixels: &[u8],
+    width: u32,
+    height: u32,
+    config: &DetectionConfig,
+) -> Option<ChromakeyResult> {
+    let mut histogram = ColorHistogram::new();
+
+    // Sample the entire frame (use stride for performance on very large images)
+    let total_pixels = (width * height) as usize;
+    let stride = if total_pixels > 500_000 {
+        // For very large images, sample every 4th pixel
+        4
+    } else if total_pixels > 100_000 {
+        // For large images, sample every 2nd pixel
+        2
+    } else {
+        // For normal images, sample every pixel
+        1
+    };
+
+    // Helper to get pixel safely
+    let get_pixel = |x: u32, y: u32| -> Option<RGB> {
+        if x >= width || y >= height {
+            return None;
+        }
+        let idx = ((y * width + x) * 4) as usize;
+        if idx + 2 < pixels.len() {
+            Some(RGB {
+                r: pixels[idx],
+                g: pixels[idx + 1],
+                b: pixels[idx + 2],
+            })
+        } else {
+            None
+        }
+    };
+
+    // Sample the full frame
+    for y in (0..height).step_by(stride) {
+        for x in (0..width).step_by(stride) {
+            if let Some(p) = get_pixel(x, y) {
+                histogram.add_pixel(p);
+            }
+        }
+    }
+
+    // Find dominant color across entire frame
+    let peaks = histogram.find_peaks(config.min_area_percentage);
+
+    if let Some(best_peak) = peaks.first() {
+        // Use the actual average RGB color from the histogram
+        Some(ChromakeyResult {
+            color: best_peak.average_color,
+            confidence: best_peak.percentage.min(1.0),
+            coverage: best_peak.percentage,
+            hue: best_peak.hue,
+            method_used: DetectionMethod::Hybrid,  // Full-frame is a hybrid approach
+        })
+    } else {
+        None
+    }
 }
 
 fn analyze_edges(
@@ -114,15 +187,10 @@ fn analyze_edges(
     let peaks = histogram.find_peaks(0.05); // Lower threshold for edges
     
     if let Some(best_peak) = peaks.first() {
-        // Construct a result from the peak
-        // We need to recover RGB from Hue. We can estimate.
-        // Or better, we should have averaged the colors in the histogram bin.
-        // For now, let's create a pure color from HSV.
-        let hsv = HSV { h: best_peak.hue, s: 1.0, v: 1.0 }; // Assume full saturation/value for the "key" color representation
-        
+        // Use the actual average RGB color from the histogram
         Some(ChromakeyResult {
-            color: hsv.to_rgb(),
-            confidence: best_peak.percentage.min(1.0), // Simple confidence metric
+            color: best_peak.average_color,  // Real average color, not reconstructed
+            confidence: best_peak.percentage.min(1.0),
             coverage: best_peak.percentage,
             hue: best_peak.hue,
             method_used: DetectionMethod::Edge,

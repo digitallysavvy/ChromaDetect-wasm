@@ -36,6 +36,9 @@ export class VideoProcessor {
     const video = isFile ? await this.loadVideoFile(source) : source;
 
     try {
+      // Ensure video is fully loaded and ready for seeking
+      await this.ensureVideoReady(video);
+
       // Extract frame timestamps
       const timestamps = this.calculateFrameTimestamps(
         video.duration,
@@ -119,6 +122,43 @@ export class VideoProcessor {
     }
   }
 
+  private async ensureVideoReady(video: HTMLVideoElement): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // If video is already ready (HAVE_ENOUGH_DATA), resolve immediately
+      if (video.readyState >= 4) {
+        resolve();
+        return;
+      }
+
+      const onCanPlayThrough = () => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        clearTimeout(timeoutId);
+        resolve();
+      };
+
+      const onError = (e: Event) => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        clearTimeout(timeoutId);
+        reject(new Error('Video failed to load: ' + (e as ErrorEvent).message));
+      };
+
+      video.addEventListener('canplaythrough', onCanPlayThrough);
+      video.addEventListener('error', onError);
+
+      // Timeout after 30 seconds for large videos
+      const timeoutId = setTimeout(() => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        reject(new Error('Video load timeout'));
+      }, 30000);
+
+      // Trigger loading if not already started
+      video.load();
+    });
+  }
+
   private async extractFrame(
     video: HTMLVideoElement,
     timestamp: number
@@ -127,12 +167,6 @@ export class VideoProcessor {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
 
-      // Ensure video is loaded enough to seek
-      if (video.readyState < 1) {
-        // HAVE_METADATA
-        // wait for metadata?
-      }
-
       const onSeeked = () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -140,18 +174,26 @@ export class VideoProcessor {
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         video.removeEventListener('seeked', onSeeked);
+        clearTimeout(timeoutId);
         resolve(imageData);
       };
 
+      const onError = () => {
+        video.removeEventListener('seeked', onSeeked);
+        clearTimeout(timeoutId);
+        reject(new Error('Seek failed'));
+      };
+
       video.addEventListener('seeked', onSeeked);
+      video.addEventListener('error', onError);
       video.currentTime = timestamp;
 
-      // Timeout after 2 seconds
-      const onTimeout = () => {
+      // Increased timeout to 5 seconds since video is now fully buffered
+      const timeoutId = setTimeout(() => {
         video.removeEventListener('seeked', onSeeked);
+        video.removeEventListener('error', onError);
         reject(new Error('Frame extraction timeout'));
-      };
-      setTimeout(onTimeout, 2000);
+      }, 5000);
     });
   }
 
@@ -160,18 +202,35 @@ export class VideoProcessor {
       const video = document.createElement('video');
       const url = URL.createObjectURL(file);
 
-      video.preload = 'metadata';
-      video.muted = true; // Important for auto-loading sometimes
+      video.preload = 'auto'; // Changed from 'metadata' to 'auto' to load full video
+      video.muted = true;
       video.src = url;
 
-      video.onloadedmetadata = () => {
+      const onCanPlayThrough = () => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        clearTimeout(timeoutId);
         resolve(video);
       };
 
-      video.onerror = () => {
+      const onError = () => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        clearTimeout(timeoutId);
         URL.revokeObjectURL(url);
         reject(new Error('Failed to load video'));
       };
+
+      video.addEventListener('canplaythrough', onCanPlayThrough);
+      video.addEventListener('error', onError);
+
+      // Timeout after 30 seconds for large video files
+      const timeoutId = setTimeout(() => {
+        video.removeEventListener('canplaythrough', onCanPlayThrough);
+        video.removeEventListener('error', onError);
+        URL.revokeObjectURL(url);
+        reject(new Error('Video load timeout'));
+      }, 30000);
     });
   }
 }
