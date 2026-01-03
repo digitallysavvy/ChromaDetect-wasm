@@ -119,6 +119,36 @@ Use the build script to compile the Rust code to WASM and bundle the TypeScript 
 ./scripts/build.sh
 ```
 
+### Running the Demo
+
+The demo application is located in the `demo/` folder and uses Vite for development and building:
+
+```bash
+# Navigate to demo directory
+cd demo
+
+# Install dependencies (includes Vite and links local chroma-detect package)
+npm install
+
+# Start development server (runs on http://localhost:3000)
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+The demo demonstrates:
+
+- Interactive video upload and chromakey detection
+- Real-time configuration of detection parameters
+- Visual display of detected colors and metrics
+- Test runner for validating detection accuracy
+
+See [demo/README.md](demo/README.md) for more details about the demo and test runner.
+
 ### Running Tests
 
 ```bash
