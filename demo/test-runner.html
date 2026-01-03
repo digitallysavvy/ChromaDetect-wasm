@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChromaDetect Test Runner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --background: #fafafa;
+        --foreground: #0a0a0a;
+        --card: #ffffff;
+        --muted: #f4f4f5;
+        --muted-foreground: #71717a;
+        --border: #e4e4e7;
+        --success: #22c55e;
+        --success-bg: #f0fdf4;
+        --success-text: #166534;
+        --error: #ef4444;
+        --error-bg: #fef2f2;
+        --error-text: #991b1b;
+        --warning: #f59e0b;
+        --warning-bg: #fffbeb;
+        --warning-text: #92400e;
+        --warning-border: #fde68a;
+        --radius: 6px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #09090b;
+          --foreground: #fafafa;
+          --card: #18181b;
+          --muted: #27272a;
+          --muted-foreground: #a1a1aa;
+          --border: #27272a;
+          --success: #4ade80;
+          --success-bg: #052e16;
+          --success-text: #86efac;
+          --error: #f87171;
+          --error-bg: #450a0a;
+          --error-text: #fca5a5;
+          --warning: #fbbf24;
+          --warning-bg: #422006;
+          --warning-text: #fcd34d;
+          --warning-border: #854d0e;
+        }
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--background);
+        color: var(--foreground);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* Header */
+      header {
+        border-bottom: 1px solid var(--border);
+        background: var(--card);
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 64px;
+      }
+
+      .logo {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--foreground);
+        text-decoration: none;
+      }
+
+      .back-link {
+        color: var(--muted-foreground);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .back-link:hover {
+        color: var(--foreground);
+      }
+
+      .github-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .github-link svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .github-stars {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        background: var(--muted);
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 4px;
+      }
+
+      /* Page Header */
+      .page-header {
+        padding: 48px 0 32px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .page-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .page-header p {
+        font-size: 14px;
+        color: var(--muted-foreground);
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.15s;
+        border: none;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: var(--foreground);
+        color: var(--background);
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-outline {
+        background: var(--card);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+      }
+
+      .btn-outline:hover {
+        background: var(--muted);
+      }
+
+      .status {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--muted-foreground);
+      }
+
+      .status.running {
+        color: var(--foreground);
+      }
+
+      /* Warning */
+      .warning {
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        margin: 24px 0;
+        font-size: 13px;
+        color: var(--warning-text);
+      }
+
+      .warning strong {
+        font-weight: 600;
+      }
+
+      /* Test Grid */
+      .test-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+        gap: 16px;
+        padding: 24px 0;
+      }
+
+      .test-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .test-card.pass {
+        border-color: var(--success);
+      }
+
+      .test-card.fail {
+        border-color: var(--error);
+      }
+
+      .test-card.running {
+        border-color: var(--foreground);
+      }
+
+      .test-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--muted);
+      }
+
+      .test-filename {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        word-break: break-all;
+      }
+
+      .test-description {
+        font-size: 12px;
+        color: var(--muted-foreground);
+      }
+
+      .video-preview {
+        width: 100%;
+        display: block;
+        background: var(--muted);
+      }
+
+      .test-body {
+        padding: 16px;
+      }
+
+      .result-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .result-badge.pass {
+        background: var(--success-bg);
+        color: var(--success-text);
+      }
+
+      .result-badge.fail {
+        background: var(--error-bg);
+        color: var(--error-text);
+      }
+
+      .result-badge.pending {
+        background: var(--muted);
+        color: var(--muted-foreground);
+      }
+
+      .result-badge.warning {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+      }
+
+      .details {
+        display: none;
+        margin-top: 16px;
+      }
+
+      .details.active {
+        display: block;
+      }
+
+      .section-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted-foreground);
+        margin-bottom: 12px;
+      }
+
+      .color-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .color-box {
+        background: var(--muted);
+        border-radius: var(--radius);
+        padding: 12px;
+      }
+
+      .color-label {
+        font-size: 11px;
+        color: var(--muted-foreground);
+        margin-bottom: 8px;
+      }
+
+      .color-swatch {
+        width: 100%;
+        height: 32px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+
+      .color-value {
+        font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+        font-size: 11px;
+      }
+
+      .metrics {
+        background: var(--muted);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        font-size: 13px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .metric-row:last-child {
+        border-bottom: none;
+      }
+
+      .metric-label {
+        color: var(--muted-foreground);
+      }
+
+      .metric-value {
+        font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .metric-value.pass {
+        color: var(--success);
+      }
+
+      .metric-value.fail {
+        color: var(--error);
+      }
+
+      .error-message {
+        background: var(--error-bg);
+        color: var(--error-text);
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      /* Summary */
+      .summary {
+        display: none;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 24px;
+        margin: 24px 0;
+      }
+
+      .summary.active {
+        display: block;
+      }
+
+      .summary h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .summary-stats {
+        display: flex;
+        justify-content: center;
+        gap: 48px;
+      }
+
+      .summary-stat {
+        text-align: center;
+      }
+
+      .summary-stat-value {
+        font-size: 32px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .summary-stat-label {
+        font-size: 12px;
+        color: var(--muted-foreground);
+        margin-top: 4px;
+      }
+
+      .summary-stat.pass .summary-stat-value {
+        color: var(--success);
+      }
+
+      .summary-stat.fail .summary-stat-value {
+        color: var(--error);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 48px;
+        color: var(--muted-foreground);
+        font-size: 14px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .test-grid {
+          grid-template-columns: 1fr;
+        }
+        .summary-stats {
+          gap: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <a href="./" class="logo">ChromaDetect</a>
+          <nav
+            class="nav-links"
+            style="display: flex; gap: 24px; align-items: center"
+          >
+            <a href="./" class="back-link">Demo</a>
+            <a
+              href="https://github.com/digitallysavvy/ChromaDetect-wasm"
+              target="_blank"
+              class="github-link"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                />
+              </svg>
+              GitHub
+              <span class="github-stars" id="starCount" style="display: none">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"
+                  />
+                </svg>
+                <span id="starNum">0</span>
+              </span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="page-header">
+        <h1>Test Runner</h1>
+        <p>
+          See how ChromaDetect performs against real-world footage with known
+          chromakey values.
+        </p>
+      </div>
+
+      <div class="controls">
+        <button id="runTests" class="btn btn-primary" onclick="runTests()">
+          Run All Tests
+        </button>
+        <button
+          id="loadExpected"
+          class="btn btn-outline"
+          onclick="loadExpectedResults()"
+        >
+          Reload Config
+        </button>
+        <span class="status" id="status">Ready</span>
+      </div>
+
+      <div
+        style="
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 24px;
+        "
+      >
+        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 500">
+          Detection Settings Override
+        </h3>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+          "
+        >
+          <div>
+            <label
+              style="
+                display: block;
+                font-size: 12px;
+                color: var(--muted-foreground);
+                margin-bottom: 4px;
+              "
+              title="Number of frames to sample. More frames = more accurate but slower."
+              >Frame Sample Count</label
+            >
+            <input
+              type="number"
+              id="frameSampleCount"
+              placeholder="8 (default)"
+              min="4"
+              max="16"
+              title="Number of frames to analyze (4-16)"
+              style="
+                width: 100%;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--background);
+                color: var(--foreground);
+                font-size: 14px;
+              "
+            />
+          </div>
+          <div>
+            <label
+              style="
+                display: block;
+                font-size: 12px;
+                color: var(--muted-foreground);
+                margin-bottom: 4px;
+              "
+              title="Uniform: evenly spaced. Keyframes: scene changes."
+              >Sample Strategy</label
+            >
+            <select
+              id="sampleStrategy"
+              title="Uniform samples evenly, Keyframes detects scene changes"
+              style="
+                width: 100%;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--background);
+                color: var(--foreground);
+                font-size: 14px;
+              "
+            >
+              <option value="">Use config default</option>
+              <option value="uniform">Uniform</option>
+              <option value="keyframes">Keyframes</option>
+            </select>
+          </div>
+          <div>
+            <label
+              style="
+                display: block;
+                font-size: 12px;
+                color: var(--muted-foreground);
+                margin-bottom: 4px;
+              "
+              title="Maximum video duration to analyze"
+              >Max Duration (seconds)</label
+            >
+            <input
+              type="number"
+              id="maxDuration"
+              placeholder="30 (default)"
+              min="5"
+              max="120"
+              title="Maximum seconds of video to analyze. Longer videos are clipped."
+              style="
+                width: 100%;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                background: var(--background);
+                color: var(--foreground);
+                font-size: 14px;
+              "
+            />
+          </div>
+        </div>
+        <p
+          style="
+            margin: 12px 0 0 0;
+            font-size: 11px;
+            color: var(--muted-foreground);
+          "
+        >
+          Leave blank to use values from expected-results.json
+        </p>
+      </div>
+
+      <div id="warningBox" class="warning" style="display: none">
+        <strong>Missing expected values</strong> — Some videos don't have
+        expected chromakey values. Update expected-results.json with actual
+        values.
+      </div>
+
+      <div id="testGrid" class="test-grid">
+        <div class="loading">Loading test configuration...</div>
+      </div>
+
+      <div id="summary" class="summary">
+        <h2>Summary</h2>
+        <div class="summary-stats">
+          <div class="summary-stat">
+            <div class="summary-stat-value" id="totalCount">0</div>
+            <div class="summary-stat-label">Total</div>
+          </div>
+          <div class="summary-stat pass">
+            <div class="summary-stat-value" id="passCount">0</div>
+            <div class="summary-stat-label">Passed</div>
+          </div>
+          <div class="summary-stat fail">
+            <div class="summary-stat-value" id="failCount">0</div>
+            <div class="summary-stat-label">Failed</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      // import { ChromaDetect } from '../js/dist/chroma-detect.js';
+      import { ChromaDetect } from 'chroma-detect';
+
+      let expectedResults = null;
+      let detector = null;
+      let testResults = [];
+
+      async function init() {
+        try {
+          detector = new ChromaDetect();
+          await detector.init();
+          await loadExpectedResults();
+        } catch (error) {
+          document.getElementById('status').textContent =
+            'Error: ' + error.message;
+        }
+
+        // Fetch GitHub stars
+        try {
+          const res = await fetch(
+            'https://api.github.com/repos/digitallysavvy/ChromaDetect-wasm'
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const stars = data.stargazers_count;
+            document.getElementById('starNum').textContent =
+              stars >= 1000 ? (stars / 1000).toFixed(1) + 'k' : stars;
+            document.getElementById('starCount').style.display = 'inline-flex';
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      async function loadExpectedResults() {
+        try {
+          const response = await fetch('./expected-results.json');
+          expectedResults = await response.json();
+          renderTestCards();
+          document.getElementById(
+            'status'
+          ).textContent = `${expectedResults.videos.length} tests loaded`;
+        } catch (error) {
+          document.getElementById('status').textContent =
+            'Error loading config';
+        }
+      }
+
+      function renderTestCards() {
+        const grid = document.getElementById('testGrid');
+        grid.innerHTML = '';
+
+        const missingValues = expectedResults.videos.filter(
+          (v) =>
+            v.expectedChromakey.color.r === null ||
+            v.expectedChromakey.hue === null
+        );
+
+        if (missingValues.length > 0) {
+          document.getElementById('warningBox').style.display = 'block';
+        }
+
+        expectedResults.videos.forEach((video, index) => {
+          grid.appendChild(createTestCard(video, index));
+        });
+      }
+
+      function createTestCard(video, index) {
+        const card = document.createElement('div');
+        card.className = 'test-card';
+        card.id = `test-${index}`;
+
+        const hasMissing = video.expectedChromakey.color.r === null;
+
+        card.innerHTML = `
+        <div class="test-header">
+          <div class="test-filename">${video.filename}</div>
+          <div class="test-description">${
+            video.description || 'No description'
+          }</div>
+        </div>
+        <video class="video-preview" id="video-${index}" muted></video>
+        <div class="test-body">
+          <div class="result-badge ${
+            hasMissing ? 'warning' : 'pending'
+          }" id="result-${index}">
+            ${hasMissing ? 'Missing Values' : 'Pending'}
+          </div>
+          <div class="details" id="details-${index}"></div>
+        </div>
+      `;
+
+        return card;
+      }
+
+      async function runTests() {
+        if (!detector || !expectedResults) return;
+
+        const runButton = document.getElementById('runTests');
+        runButton.disabled = true;
+        document.getElementById('status').textContent = 'Running...';
+        document.getElementById('status').className = 'status running';
+
+        testResults = [];
+
+        for (let i = 0; i < expectedResults.videos.length; i++) {
+          const video = expectedResults.videos[i];
+          const card = document.getElementById(`test-${i}`);
+          card.className = 'test-card running';
+
+          try {
+            const result = await testVideo(video, i);
+            testResults.push({ video, result, passed: result.passed });
+            updateTestCard(i, video, result);
+            card.className = result.passed
+              ? 'test-card pass'
+              : 'test-card fail';
+          } catch (error) {
+            testResults.push({
+              video,
+              result: { error: error.message },
+              passed: false,
+            });
+            const resultEl = document.getElementById(`result-${i}`);
+            resultEl.className = 'result-badge fail';
+            resultEl.innerHTML = `Error`;
+            document.getElementById(
+              `details-${i}`
+            ).innerHTML = `<div class="error-message">${error.message}</div>`;
+            document.getElementById(`details-${i}`).classList.add('active');
+            card.className = 'test-card fail';
+          }
+        }
+
+        showSummary();
+        runButton.disabled = false;
+        document.getElementById('status').textContent = 'Complete';
+        document.getElementById('status').className = 'status';
+      }
+
+      async function testVideo(videoConfig, index) {
+        const videoElement = document.getElementById(`video-${index}`);
+        videoElement.src = `./${videoConfig.filename}`;
+
+        await new Promise((resolve, reject) => {
+          videoElement.onloadedmetadata = resolve;
+          videoElement.onerror = reject;
+        });
+
+        // Get UI override values
+        const frameSampleCountOverride =
+          document.getElementById('frameSampleCount').value;
+        const sampleStrategyOverride =
+          document.getElementById('sampleStrategy').value;
+        const maxDurationOverride =
+          document.getElementById('maxDuration').value;
+
+        // Merge config with UI overrides
+        const testConfig = {
+          ...videoConfig.testConfig,
+          ...(frameSampleCountOverride && {
+            frameSampleCount: parseInt(frameSampleCountOverride),
+          }),
+          ...(sampleStrategyOverride && {
+            sampleStrategy: sampleStrategyOverride,
+          }),
+          ...(maxDurationOverride && {
+            maxDuration: parseInt(maxDurationOverride),
+          }),
+        };
+
+        const detected = await detector.detectFromVideo(
+          videoElement,
+          testConfig
+        );
+
+        if (!detected) {
+          return { passed: false, error: 'No chromakey detected' };
+        }
+
+        const expected = videoConfig.expectedChromakey;
+        const colorDist = colorDistance(detected.color, expected.color);
+        const hueDiff = hueDifference(detected.hue, expected.hue);
+
+        const colorPass = colorDist <= videoConfig.tolerances.colorTolerance;
+        const huePass = hueDiff <= videoConfig.tolerances.hueTolerance;
+        const confidencePass =
+          detected.confidence >= videoConfig.tolerances.minConfidence;
+        const coveragePass =
+          detected.coverage >= videoConfig.tolerances.minCoverage;
+
+        return {
+          passed: colorPass && huePass && confidencePass && coveragePass,
+          detected,
+          expected,
+          colorDist,
+          hueDiff,
+          checks: { colorPass, huePass, confidencePass, coveragePass },
+        };
+      }
+
+      function updateTestCard(index, video, result) {
+        const resultEl = document.getElementById(`result-${index}`);
+        const detailsEl = document.getElementById(`details-${index}`);
+
+        if (result.error) {
+          resultEl.className = 'result-badge fail';
+          resultEl.textContent = 'Failed';
+          detailsEl.innerHTML = `<div class="error-message">${result.error}</div>`;
+          detailsEl.classList.add('active');
+          return;
+        }
+
+        resultEl.className = `result-badge ${result.passed ? 'pass' : 'fail'}`;
+        resultEl.textContent = result.passed ? 'Pass' : 'Fail';
+
+        const d = result.detected;
+        const e = result.expected;
+
+        detailsEl.classList.add('active');
+        detailsEl.innerHTML = `
+        <div class="section-title">Color Comparison</div>
+        <div class="color-grid">
+          <div class="color-box">
+            <div class="color-label">Detected</div>
+            <div class="color-swatch" style="background: rgb(${d.color.r}, ${
+          d.color.g
+        }, ${d.color.b})"></div>
+            <div class="color-value">rgb(${d.color.r}, ${d.color.g}, ${
+          d.color.b
+        })</div>
+          </div>
+          <div class="color-box">
+            <div class="color-label">Expected</div>
+            <div class="color-swatch" style="background: rgb(${e.color.r}, ${
+          e.color.g
+        }, ${e.color.b})"></div>
+            <div class="color-value">rgb(${e.color.r}, ${e.color.g}, ${
+          e.color.b
+        })</div>
+          </div>
+        </div>
+
+        <div class="section-title">Metrics</div>
+        <div class="metrics">
+          <div class="metric-row">
+            <span class="metric-label">Color Distance</span>
+            <span class="metric-value ${
+              result.checks.colorPass ? 'pass' : 'fail'
+            }">${result.colorDist.toFixed(2)}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Hue Difference</span>
+            <span class="metric-value ${
+              result.checks.huePass ? 'pass' : 'fail'
+            }">${result.hueDiff.toFixed(1)}°</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Confidence</span>
+            <span class="metric-value ${
+              result.checks.confidencePass ? 'pass' : 'fail'
+            }">${(d.confidence * 100).toFixed(1)}%</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Coverage</span>
+            <span class="metric-value ${
+              result.checks.coveragePass ? 'pass' : 'fail'
+            }">${(d.coverage * 100).toFixed(1)}%</span>
+          </div>
+          ${
+            d.method
+              ? `
+          <div class="metric-row">
+            <span class="metric-label">Method</span>
+            <span class="metric-value">${d.method}</span>
+          </div>
+          `
+              : ''
+          }
+        </div>
+      `;
+      }
+
+      function showSummary() {
+        const passed = testResults.filter((r) => r.passed).length;
+        const failed = testResults.length - passed;
+
+        document.getElementById('summary').classList.add('active');
+        document.getElementById('totalCount').textContent = testResults.length;
+        document.getElementById('passCount').textContent = passed;
+        document.getElementById('failCount').textContent = failed;
+      }
+
+      function colorDistance(c1, c2) {
+        return Math.sqrt(
+          (c1.r - c2.r) ** 2 + (c1.g - c2.g) ** 2 + (c1.b - c2.b) ** 2
+        );
+      }
+
+      function hueDifference(h1, h2) {
+        const diff = Math.abs(h1 - h2);
+        return Math.min(diff, 360 - diff);
+      }
+
+      window.runTests = runTests;
+      window.loadExpectedResults = loadExpectedResults;
+
+      init();
+    </script>
+  </body>
+</html>

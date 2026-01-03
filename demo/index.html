@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChromaDetect</title>
+    <!-- External font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <a href="./" class="logo">ChromaDetect</a>
+          <nav class="nav-links">
+            <a href="./test-runner.html">Tests</a>
+            <a
+              href="https://github.com/digitallysavvy/ChromaDetect-wasm"
+              target="_blank"
+              class="github-link"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                />
+              </svg>
+              GitHub
+              <span class="github-stars" id="starCount" style="display: none">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"
+                  />
+                </svg>
+                <span id="starNum">0</span>
+              </span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Main hero section with video upload interface -->
+      <section class="hero">
+        <div class="container">
+          <div class="hero-content">
+            <h1>Chromakey Detection</h1>
+            <p>
+              The first open-source chromakey detector that runs entirely in
+              your browser. No uploads, no waiting—just instant, accurate
+              results.
+            </p>
+          </div>
+
+          <!-- Upload card: supports both drag-and-drop and click-to-browse -->
+          <div
+            class="upload-card"
+            id="uploadCard"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            <div id="uploadPrompt">
+              <svg
+                class="upload-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                />
+              </svg>
+              <p class="upload-label">Drop your video here</p>
+              <p class="upload-hint">or click to browse</p>
+            </div>
+
+            <!-- Video preview section: shown after file selection -->
+            <div id="videoPreviewSection" style="display: none">
+              <div class="preview-grid active">
+                <!-- Video element used for both preview and chroma detection -->
+                <video
+                  id="videoPreview"
+                  class="video-preview"
+                  controls
+                  muted
+                ></video>
+
+                <div style="display: flex; flex-direction: column; gap: 12px">
+                  <!-- Detection configuration panel -->
+                  <div class="info-card" onclick="event.stopPropagation()">
+                    <h3>Detection Settings</h3>
+                    <!-- Frame sample count: controls how many frames to analyze -->
+                    <div class="info-row">
+                      <span
+                        class="info-label"
+                        title="Number of frames to sample from video. More frames = more accurate but slower."
+                        >Frames</span
+                      >
+                      <input
+                        type="number"
+                        id="frameSampleCount"
+                        value="8"
+                        min="4"
+                        max="16"
+                        title="Number of frames to analyze (4-16). Default: 8"
+                        onclick="event.stopPropagation()"
+                        style="
+                          width: 60px;
+                          padding: 4px;
+                          border: 1px solid var(--border);
+                          border-radius: 4px;
+                          background: var(--background);
+                          color: var(--foreground);
+                        "
+                      />
+                    </div>
+                    <!-- Sampling strategy: uniform (even spacing) or keyframes (scene changes) -->
+                    <div class="info-row">
+                      <span
+                        class="info-label"
+                        title="Uniform: evenly spaced frames. Keyframes: detect scene changes."
+                        >Strategy</span
+                      >
+                      <select
+                        id="sampleStrategy"
+                        title="Uniform samples evenly, Keyframes detects scene changes"
+                        onclick="event.stopPropagation()"
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border);
+                          border-radius: 4px;
+                          background: var(--background);
+                          color: var(--foreground);
+                        "
+                      >
+                        <option value="uniform">Uniform</option>
+                        <option value="keyframes">Keyframes</option>
+                      </select>
+                    </div>
+                    <!-- Max duration: limits analysis to first N seconds of video -->
+                    <div class="info-row">
+                      <span
+                        class="info-label"
+                        title="Maximum video duration to analyze in seconds"
+                        >Max Duration</span
+                      >
+                      <input
+                        type="number"
+                        id="maxDuration"
+                        value="30"
+                        min="5"
+                        max="120"
+                        title="Maximum seconds of video to analyze. Longer videos are clipped."
+                        onclick="event.stopPropagation()"
+                        style="
+                          width: 60px;
+                          padding: 4px;
+                          border: 1px solid var(--border);
+                          border-radius: 4px;
+                          background: var(--background);
+                          color: var(--foreground);
+                        "
+                      />
+                      <span
+                        style="
+                          font-size: 11px;
+                          color: var(--muted-foreground);
+                          margin-left: 4px;
+                        "
+                        >sec</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Main action button: triggers chroma detection -->
+                  <button
+                    class="btn btn-primary"
+                    id="processBtn"
+                    onclick="event.stopPropagation(); processVideo()"
+                  >
+                    Detect Chromakey
+                  </button>
+                  <!-- Clear button: resets the UI and removes current video -->
+                  <button
+                    class="btn btn-outline"
+                    onclick="event.stopPropagation(); clearVideo()"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <!-- Video metadata display: file info, duration, resolution, size -->
+                <div class="info-card horizontal preview-info-row">
+                  <div class="info-content">
+                    <div class="info-row">
+                      <span class="info-label">File</span>
+                      <span class="info-value" id="fileName">-</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">Duration</span>
+                      <span class="info-value" id="duration">-</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">Resolution</span>
+                      <span class="info-value" id="resolution">-</span>
+                    </div>
+                    <div class="info-row">
+                      <span class="info-label">Size</span>
+                      <span class="info-value" id="fileSize">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Hidden file input: triggered by upload card click -->
+          <input type="file" id="fileInput" accept="video/*" />
+
+          <!-- Results panel: displayed after successful chroma detection -->
+          <div class="results-card" id="resultsCard">
+            <h2 class="results-header">Results</h2>
+            <div class="results-grid">
+              <!-- Detected color display: shows RGB, HEX, and Hue values -->
+              <div class="color-preview">
+                <div class="color-swatch" id="colorSwatch"></div>
+                <div class="color-details">
+                  <div class="color-row">
+                    <span class="color-label">RGB</span>
+                    <span class="color-value" id="rgbValue">-</span>
+                  </div>
+                  <div class="color-row">
+                    <span class="color-label">HEX</span>
+                    <span class="color-value" id="hexValue">-</span>
+                  </div>
+                  <div class="color-row">
+                    <span class="color-label">Hue</span>
+                    <span class="color-value" id="hueValue">-</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Detection metrics: confidence, coverage, and method used -->
+              <div class="metrics-grid">
+                <!-- Confidence: 0-100% indicating detection certainty -->
+                <div class="metric">
+                  <div class="metric-tooltip">
+                    How certain we are this is the chromakey color. Higher means
+                    more pixels consistently matched this color.
+                  </div>
+                  <div class="metric-value" id="confidenceValue">-</div>
+                  <div class="metric-label">Confidence</div>
+                </div>
+                <!-- Coverage: percentage of frame covered by detected color -->
+                <div class="metric">
+                  <div class="metric-tooltip">
+                    Percentage of the frame covered by this color. Typical
+                    chromakeys cover 40-90% of the frame.
+                  </div>
+                  <div class="metric-value" id="coverageValue">-</div>
+                  <div class="metric-label">Coverage</div>
+                </div>
+                <!-- Method: which algorithm was used (hybrid, edge, or cluster) -->
+                <div class="metric">
+                  <div class="metric-tooltip">
+                    Detection algorithm used. Hybrid analyzes the full frame,
+                    Edge focuses on borders, Cluster groups similar colors.
+                  </div>
+                  <div class="metric-value" id="methodValue">-</div>
+                  <div class="metric-label">Method</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features section: highlights key benefits of the library -->
+      <section class="features">
+        <div class="container">
+          <div class="features-grid">
+            <div class="feature">
+              <h3>Private</h3>
+              <p>
+                Your videos never leave your device. Everything runs locally in
+                the browser.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Instant</h3>
+              <p>
+                Get results in seconds, not minutes. No server queues or
+                processing delays.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Any Color</h3>
+              <p>
+                Green screen, blue screen, black backdrop—it detects whatever
+                you're working with.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Pixel-Perfect</h3>
+              <p>
+                Analyzes your entire frame to find the exact color, not an
+                approximation.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Consistent</h3>
+              <p>
+                Samples multiple frames so lighting changes won't throw off your
+                results.
+              </p>
+            </div>
+            <div class="feature">
+              <h3>Open Source</h3>
+              <p>Free to use, inspect, and build upon. No black boxes here.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <span class="footer-made">Built with Rust & WebAssembly</span>
+          <div class="footer-links">
+            <a
+              href="https://github.com/digitallysavvy/ChromaDetect-wasm"
+              target="_blank"
+              >GitHub</a
+            >
+            <a
+              href="https://github.com/digitallysavvy/ChromaDetect-wasm/issues"
+              target="_blank"
+              >Issues</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Main application script: handles chroma detection logic -->
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -26,6 +26,13 @@ npm install chroma-detect
 
 ## Usage
 
+### 0. Interactive Demo & Test Runner
+
+You can try Chroma Detect directly in your browser or run the video test suite:
+
+- **Live Demo**: [https://digitallysavvy.github.io/ChromaDetect-wasm/](https://digitallysavvy.github.io/ChromaDetect-wasm/)
+- **Test Runner**: [https://digitallysavvy.github.io/ChromaDetect-wasm/test-runner.html](https://digitallysavvy.github.io/ChromaDetect-wasm/test-runner.html)
+
 ### 1. Basic Image Detection
 
 ```typescript

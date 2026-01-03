@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Expected chromakey detection results for test videos. Fill in the values after checking in Photoshop or other color picker tools.",
+  "videos": [
+    {
+      "filename": "assets/147939-793104681_tiny_square.mp4",
+      "description": "Blue screen with high coverage",
+      "expectedChromakey": {
+        "color": {
+          "r": 12,
+          "g": 81,
+          "b": 173,
+          "hex": "0c51ad"
+        },
+        "hue": 214,
+        "notes": "Standard blue chromakey covering ~72% of frame"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.7,
+        "minCoverage": 0.1
+      }
+    },
+    {
+      "filename": "assets/182879-869766891_small_square.mp4",
+      "description": "Green screen with moderate coverage",
+      "expectedChromakey": {
+        "color": {
+          "r": 0,
+          "g": 177,
+          "b": 17,
+          "hex": "01b013"
+        },
+        "hue": 125,
+        "notes": "Chromakey covers ~56% of frame with lighting variation"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.5,
+        "minCoverage": 0.1
+      }
+    },
+    {
+      "filename": "assets/32954-394417985_small_square.mp4",
+      "description": "Dark green screen with high coverage",
+      "expectedChromakey": {
+        "color": {
+          "r": 0,
+          "g": 111,
+          "b": 12,
+          "hex": "006f0c"
+        },
+        "hue": 126,
+        "notes": "Darker green chromakey covering ~82% of frame"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.7,
+        "minCoverage": 0.1
+      }
+    },
+    {
+      "filename": "assets/34501-402103985_small_square.mp4",
+      "description": "Bright green screen with very high coverage",
+      "expectedChromakey": {
+        "color": {
+          "r": 0,
+          "g": 230,
+          "b": 89,
+          "hex": "00e659"
+        },
+        "hue": 143,
+        "notes": "Bright green chromakey covering ~88% of frame"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.7,
+        "minCoverage": 0.1
+      }
+    },
+    {
+      "filename": "assets/35680-407113559_small_square.mp4",
+      "description": "Very dark green screen with extremely high coverage",
+      "expectedChromakey": {
+        "color": {
+          "r": 1,
+          "g": 54,
+          "b": 6,
+          "hex": "013606"
+        },
+        "hue": 126,
+        "notes": "Very dark green chromakey covering ~97% of frame"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.7,
+        "minCoverage": 0.1
+      }
+    },
+    {
+      "filename": "assets/51896-467131961_small_square.mp4",
+      "description": "Black chromakey background",
+      "expectedChromakey": {
+        "color": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "hex": "000000"
+        },
+        "hue": 0,
+        "notes": "Black chromakey covering ~74% of frame"
+      },
+      "testConfig": {
+        "frameSampleCount": 8,
+        "sampleStrategy": "uniform",
+        "maxDuration": 30
+      },
+      "tolerances": {
+        "colorTolerance": 10,
+        "hueTolerance": 5,
+        "minConfidence": 0.7,
+        "minCoverage": 0.1
+      }
+    }
+  ]
+}

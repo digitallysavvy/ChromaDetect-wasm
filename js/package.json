@@ -1,6 +1,6 @@
 {
   "name": "chroma-detect",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "High-performance chromakey detection for the web, powered by Rust and WebAssembly",
   "keywords": [
     "chromakey",
